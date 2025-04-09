@@ -1,33 +1,33 @@
-# Tidyverse paketini y??kleme
+# Tidyverse paketini yukleme
 if (!require(tidyverse)) install.packages("tidyverse")
 library(tidyverse)
 
-# Veri setini y??kleme
+# Veri setini yukleme
 books_data <- read.csv("https://raw.githubusercontent.com/luminati-io/Amazon-popular-books-dataset/refs/heads/main/Amazon_popular_books_dataset.csv")
 
-# Veri setini ke??fetme
+# Veri setini kesfetme
 summary(books_data)
 str(books_data)
 
-# ??lk birka?? sat??r?? g??r??nt??leme
+# ilk birkac satiri goruntuleme
 head(books_data)
 
-# Rating s??tununu say??sal de??ere d??n????t??rme
+# Rating sutununu sayısal degere donusturme
 books_data <- books_data %>%
   mutate(avg_rating = as.numeric(str_extract(rating, "\\d+\\.\\d+")))
 
-# Eksik de??erleri tespit etme
+# Eksik degerleri tespit etme
 colSums(is.na(books_data))
 
-# Eksik de??erleri temizleme
+# Eksik degerleri temizleme
 books_clean <- books_data %>%
   filter(!is.na(avg_rating) & !is.na(reviews_count) & !is.na(final_price))
 
-# Temizlenmi?? veri setini kontrol etme
+# Temizlenmis veri setini kontrol etme
 summary(books_clean)
 
-# Kitap kategorilerine g??re ortalama puanlar?? analiz etme
-# Kategoriler JSON format??nda oldu??u i??in ??nce temizleyelim
+# Kitap kategorilerine gore ortalama puanlari analiz etme
+# Kategoriler JSON formatinda oldugu icin once temizleyelim
 books_clean <- books_clean %>%
   mutate(main_category = str_extract(categories, "\"([^\"]*)\"", group = 1))
 
@@ -40,7 +40,7 @@ category_ratings <- books_clean %>%
 
 print(category_ratings)
 
-# En ??ok inceleme alan kitaplar?? belirleme
+# En cok inceleme alan kitaplari belirleme
 top_reviewed_books <- books_clean %>%
   arrange(desc(reviews_count)) %>%
   select(title, reviews_count, avg_rating) %>%
@@ -48,8 +48,8 @@ top_reviewed_books <- books_clean %>%
 
 print(top_reviewed_books)
 
-# Fiyat ve inceleme say??s?? aras??ndaki ili??kiyi inceleme
-# Fiyat kategorileri olu??turma
+# Fiyat ve inceleme sayisi arasindaki iliskiyi inceleme
+# Fiyat kategorileri olusturma
 books_clean <- books_clean %>%
   mutate(price_category = case_when(
     final_price < 10 ~ "Low",
@@ -59,18 +59,18 @@ books_clean <- books_clean %>%
 
 # Korelasyon analizi
 cor_value <- cor(books_clean$final_price, books_clean$reviews_count, use = "complete.obs")
-print(paste("Fiyat ve inceleme say??s?? aras??ndaki korelasyon:", round(cor_value, 3)))
+print(paste("Fiyat ve inceleme sayisi arasindaki korelasyon:", round(cor_value, 3)))
 
-# Bulgular?? g??rselle??tirme
-# ??nceleme say??s?? ve ortalama puan ili??kisi
+# Bulgulari gorsellestirme
+# inceleme sayisi ve ortalama puan iliskisi
 ggplot(books_clean, aes(x = reviews_count, y = avg_rating)) +
   geom_point(aes(color = price_category), alpha = 0.6) +
-  scale_x_log10() +  # ??nceleme say??s?? ??ok geni?? bir aral??kta oldu??u i??in logaritmik ??l??ek kullan??yoruz
-  labs(title = "??nceleme Say??s?? ve Ortalama Puan ??li??kisi",
-       x = "??nceleme Say??s?? (log ??l??ek)", y = "Ortalama Puan") +
+  scale_x_log10() +  # Inceleme sayisi cok genis bir aralikta oldugu icin logaritmik olcek kullaniyoruz
+  labs(title = "inceleme sayisi ve ortalama puan iliskisi",
+       x = "inceleme sayisi (log olcek)", y = "Ortalama Puan") +
   theme_minimal()
 
-# Kategori baz??nda ortalama puanlar 
+# Kategori bazinda ortalama puanlar 
 books_clean <- books_clean %>%
   mutate(
     categories_parsed = lapply(categories, function(x) {
@@ -85,7 +85,7 @@ books_clean <- books_clean %>%
     })
   )
 
-# Alt kategorilere g??re analiz
+# Alt kategorilere gore analiz
 category_ratings <- books_clean %>%
   filter(!is.na(sub_category)) %>%
   group_by(sub_category) %>%
@@ -94,28 +94,28 @@ category_ratings <- books_clean %>%
   filter(count > 10) %>%
   arrange(desc(avg_rating))
 
-# En y??ksek puanl?? 10 alt kategori
+# En yuksek puanli 10 alt kategori
 top_categories <- category_ratings %>% head(10)
 
 ggplot(top_categories, aes(x = reorder(sub_category, avg_rating), y = avg_rating)) +
   geom_bar(stat = "identity", fill = "#2aa4a9") +
   coord_flip() +
-  labs(title = "En Y??ksek Puanl?? 10 Alt Kategori",
+  labs(title = "En Yuksek Puanli 10 Alt Kategori",
        x = "Alt Kategori", y = "Ortalama Puan") +
   theme_minimal()
 
 
 
-# Fiyat ve inceleme say??s?? ili??kisi
+# Fiyat ve inceleme sayisi iliskisi
 ggplot(books_clean, aes(x = final_price, y = reviews_count)) +
   geom_point(alpha = 0.6) +
   geom_smooth(method = "lm", se = FALSE, color = "red") +
-  scale_y_log10() +  # ??nceleme say??s?? i??in logaritmik ??l??ek
-  labs(title = "Fiyat ve ??nceleme Say??s?? ??li??kisi",
-       x = "Fiyat ($)", y = "??nceleme Say??s?? (log ??l??ek)") +
+  scale_y_log10() +  # Inceleme sayisi icin logaritmik olcek
+  labs(title = "Fiyat ve Inceleme Sayisi Iliskisi",
+       x = "Fiyat ($)", y = "Inceleme Sayisi (log olcek)") +
   theme_minimal()
 
-# Fiyat kategorilerine g??re ortalama puanlar
+# Fiyat kategorilerine gore ortalama puanlar
 price_ratings <- books_clean %>%
   group_by(price_category) %>%
   summarise(avg_rating = mean(avg_rating),
@@ -123,6 +123,6 @@ price_ratings <- books_clean %>%
 
 ggplot(price_ratings, aes(x = price_category, y = avg_rating, fill = price_category)) +
   geom_bar(stat = "identity") +
-  labs(title = "Fiyat Kategorilerine G??re Ortalama Puanlar",
+  labs(title = "Fiyat Kategorilerine Gore Ortalama Puanlar",
        x = "Fiyat Kategorisi", y = "Ortalama Puan") +
   theme_minimal()
